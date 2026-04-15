@@ -1,0 +1,238 @@
+.view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  height: 100%;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.headerRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--size-xl);
+  color: var(--text-primary);
+}
+
+.subtitle {
+  font-family: var(--font-mono);
+  color: var(--text-tertiary);
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-3) 0;
+  align-items: center;
+}
+
+.search {
+  position: relative;
+  flex: 1;
+  min-width: 220px;
+  max-width: 420px;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 8px 14px 8px 32px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  transition: border-color var(--dur-fast) var(--ease);
+}
+
+.searchInput:focus-visible {
+  border-color: var(--accent);
+}
+
+.searchIcon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  font-size: 0.78rem;
+  pointer-events: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-default);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+}
+
+.chip:hover {
+  color: var(--text-primary);
+}
+
+.chipActive {
+  color: var(--accent-bright);
+  border-color: var(--border-accent);
+  background: var(--accent-tint);
+}
+
+.list {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: rgba(13, 18, 28, 0.6);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 64px 100px 1fr 72px 72px;
+  gap: var(--space-3);
+  padding: 10px var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  align-items: center;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+  border-left: 2px solid transparent;
+}
+
+.row:hover {
+  background: var(--bg-panel-2);
+  color: var(--text-primary);
+}
+
+.rowSelected {
+  background: var(--accent-tint);
+  border-left-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.priority {
+  display: inline-block;
+  width: 6px;
+  height: 28px;
+  border-radius: 2px;
+  background: var(--border-default);
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.priorityHIGH,
+.priorityRELIABLE {
+  background: var(--status-warn);
+  box-shadow: 0 0 6px rgba(251, 146, 60, 0.6);
+}
+
+.priorityACK {
+  background: var(--accent);
+  box-shadow: 0 0 4px rgba(56, 189, 248, 0.6);
+}
+
+.priorityBACKGROUND {
+  background: var(--text-muted);
+}
+
+.time {
+  color: var(--text-tertiary);
+  font-size: 0.74rem;
+}
+
+.from {
+  color: var(--accent-bright);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text {
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.portnum {
+  font-size: 0.64rem;
+  color: var(--text-tertiary);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elev);
+  border: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.hops {
+  text-align: right;
+  color: var(--text-tertiary);
+  font-size: 0.72rem;
+}
+
+.hopBar {
+  display: inline-flex;
+  gap: 2px;
+  vertical-align: middle;
+}
+
+.hopCell {
+  width: 4px;
+  height: 10px;
+  background: var(--border-default);
+  border-radius: 1px;
+}
+
+.hopCellUsed {
+  background: var(--accent);
+}
+
+.viaMqtt {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--accent-2);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.empty {
+  padding: var(--space-7) var(--space-5);
+  text-align: center;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+}
