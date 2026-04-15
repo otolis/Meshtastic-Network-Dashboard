@@ -34,6 +34,14 @@ export default tseslint.config(
     },
   },
   {
+    // Context modules intentionally export a Provider component alongside hooks —
+    // that's the whole point of a context module. Fast-refresh restriction doesn't apply here.
+    files: ['src/state/**/*.{ts,tsx}', 'src/app/**/*.{ts,tsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
+  {
     files: ['vite.config.ts', '*.config.js', '*.config.ts'],
     languageOptions: {
       globals: { ...globals.node },
