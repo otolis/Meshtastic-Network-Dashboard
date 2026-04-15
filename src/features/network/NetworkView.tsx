@@ -6,7 +6,7 @@ import { ForceGraph } from './ForceGraph';
 import { Legend } from './Legend';
 import { Tooltip } from './Tooltip';
 import { useDataSource } from '../../state/DataSourceContext';
-import { useEdges, useNodes, useSelection } from '../../state/hooks';
+import { useAllMessages, useEdges, useNodes, useSelection } from '../../state/hooks';
 import type { Node, NodeId } from '../../types';
 import type { MeshEventPayload } from '../../data/source';
 
@@ -16,6 +16,7 @@ export default function NetworkView() {
   const graphRef = useRef<ForceGraph | null>(null);
   const nodes = useNodes();
   const edges = useEdges();
+  const messages = useAllMessages();
   const { selectNode, clear, kind, id: selectedId } = useSelection();
   const source = useDataSource();
   const [hoverNode, setHoverNode] = useState<Node | null>(null);
@@ -83,15 +84,24 @@ export default function NetworkView() {
     return unsub;
   }, [source]);
 
-  // Highlight selection from cross-view actions (e.g., Messages view path highlight)
+  // Highlight selection from cross-view actions
   useEffect(() => {
     if (!graphRef.current) return;
     if (kind === 'node' && selectedId) {
       graphRef.current.highlightPath([selectedId as NodeId]);
+      graphRef.current.pulseNode(selectedId as NodeId, { durationMs: 700, intensity: 0.6 });
+    } else if (kind === 'message' && selectedId) {
+      const msg = messages.data.find((m) => m.id === selectedId);
+      if (msg?.path && msg.path.length > 1) {
+        graphRef.current.highlightPath(msg.path);
+        graphRef.current.pulsePath(msg.path, { durationMs: 900 });
+      } else {
+        graphRef.current.highlightPath(null);
+      }
     } else {
       graphRef.current.highlightPath(null);
     }
-  }, [kind, selectedId]);
+  }, [kind, selectedId, messages.data]);
 
   // GSAP reveal animation on mount — single-fire, cleans up on unmount via useGSAP scope
   useGSAP(
