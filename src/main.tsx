@@ -1,5 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { HashRouter } from 'react-router-dom';
 import App from './App';
 import { Providers } from './app/Providers';
 import './index.css';
@@ -11,8 +12,10 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <Providers>
-      <App />
-    </Providers>
+    <HashRouter>
+      <Providers>
+        <App />
+      </Providers>
+    </HashRouter>
   </StrictMode>,
 );
