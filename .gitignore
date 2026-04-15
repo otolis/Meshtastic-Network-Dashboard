@@ -1,0 +1,103 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+dist/
+dist-ssr/
+build/
+*.local
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Caches
+.cache/
+.parcel-cache/
+.vite/
+.turbo/
+.eslintcache
+.stylelintcache
+
+# Coverage / tests
+coverage/
+*.lcov
+.nyc_output/
+
+# TypeScript
+*.tsbuildinfo
+
+# Local workflow and tooling — not part of the published project
+.planning/
+.gsd/
+.superpowers/
+.skills/
+.history/
+
+# AI assistant config, memory, and artifacts — never commit
+CLAUDE.md
+CLAUDE.local.md
+AGENTS.md
+GEMINI.md
+OPENAI.md
+CHATGPT.md
+COPILOT.md
+.claude/
+.anthropic/
+.openai/
+.chatgpt/
+.gemini/
+.codex/
+.cursor/
+.cursorrules
+.cursorignore
+.continue/
+.codeium/
+.aider*
+aider.chat.history.md
+.roo/
+.roocode/
+.sweep/
+.plandex/
+.plandex-dev/
+.supermaven/
+.tabnine/
+.windsurf/
+.bolt/
+.devin/
+.v0/
+.fabric/
+.zed-ai/
+.github/copilot*
+.github/chatmodes/
+.mcp/
+prompts/
+.prompts/
+
+# Editor AI plugins
+.idea/ai*
+.vscode/copilot*
+.vscode/claude*
