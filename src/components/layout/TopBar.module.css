@@ -1,0 +1,165 @@
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-5);
+  background: linear-gradient(180deg, var(--bg-elev) 0%, rgba(27, 37, 58, 0.82) 100%);
+  border-bottom: 1px solid var(--border-subtle);
+  backdrop-filter: blur(12px);
+  gap: var(--space-4);
+  position: relative;
+  z-index: 11;
+}
+
+.title {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.titleMain {
+  font-family: var(--font-sans);
+  font-size: var(--size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.titleSub {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.center {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex: 1;
+  justify-content: center;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-default);
+  background: var(--bg-panel);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.pillDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--status-mock);
+  animation: pillBlink 2.2s var(--ease) infinite;
+}
+
+.pillLive {
+  color: var(--status-live);
+  border-color: rgba(34, 211, 238, 0.45);
+}
+.pillLive .pillDot {
+  background: var(--status-live);
+  box-shadow: 0 0 10px var(--status-live);
+}
+
+.pillStale {
+  color: var(--status-stale);
+  border-color: rgba(250, 204, 21, 0.5);
+}
+.pillStale .pillDot {
+  background: var(--status-stale);
+  box-shadow: 0 0 10px var(--status-stale);
+}
+
+.pillOffline {
+  color: var(--status-offline);
+  border-color: rgba(248, 113, 113, 0.55);
+}
+.pillOffline .pillDot {
+  background: var(--status-offline);
+  box-shadow: 0 0 10px var(--status-offline);
+  animation: none;
+}
+
+.pillMock {
+  color: var(--status-mock);
+  border-color: rgba(167, 139, 250, 0.55);
+}
+.pillMock .pillDot {
+  background: var(--status-mock);
+  box-shadow: 0 0 10px var(--status-mock);
+}
+
+@keyframes pillBlink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.42;
+  }
+}
+
+.meta {
+  font-family: var(--font-mono);
+  color: var(--text-tertiary);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+}
+
+.ranges {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--bg-panel);
+}
+
+.rangeBtn {
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+  border-right: 1px solid var(--border-subtle);
+  transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+
+.rangeBtn:last-child {
+  border-right: 0;
+}
+
+.rangeBtn:hover {
+  color: var(--text-primary);
+  background: var(--bg-panel-2);
+}
+
+.rangeBtnActive {
+  color: var(--accent-bright);
+  background: var(--accent-tint);
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+@media (max-width: 768px) {
+  .titleSub,
+  .meta {
+    display: none;
+  }
+}
