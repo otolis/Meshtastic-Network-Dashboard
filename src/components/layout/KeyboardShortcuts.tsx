@@ -9,7 +9,7 @@ const NAV_MAP: Record<string, string> = {
   '4': '/devices',
 };
 
-export function KeyboardShortcuts() {
+export function KeyboardShortcuts({ onHelp }: { onHelp?: () => void }) {
   const navigate = useNavigate();
   const { clear } = useSelection();
 
@@ -36,12 +36,17 @@ export function KeyboardShortcuts() {
           search.focus();
           e.preventDefault();
         }
+        return;
+      }
+      if (e.key === '?') {
+        onHelp?.();
+        e.preventDefault();
       }
     }
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [navigate, clear]);
+  }, [navigate, clear, onHelp]);
 
   return null;
 }

@@ -6,6 +6,7 @@ import { SideNav } from './SideNav';
 import { TopBar } from './TopBar';
 import { Inspector } from './Inspector';
 import { KeyboardShortcuts } from './KeyboardShortcuts';
+import { HelpOverlay } from './HelpOverlay';
 
 const NAV_COLLAPSED_KEY = 'mdash:nav-collapsed';
 
@@ -26,13 +27,16 @@ export function Shell({ children }: { children: ReactNode }) {
     }
   }, [collapsed]);
 
+  const [helpOpen, setHelpOpen] = useState(false);
+
   return (
     <div className={clsx(styles.shell, collapsed && styles.collapsed)}>
       <TopBar className={styles.topbar} />
       <SideNav className={styles.nav} collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} />
       <main className={styles.main}>{children}</main>
       <Inspector className={styles.inspector} />
-      <KeyboardShortcuts />
+      <KeyboardShortcuts onHelp={() => setHelpOpen((v) => !v)} />
+      <HelpOverlay open={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 }
