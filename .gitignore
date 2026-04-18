@@ -101,3 +101,7 @@ prompts/
 .idea/ai*
 .vscode/copilot*
 .vscode/claude*
+
+docs
+
+.vscode
