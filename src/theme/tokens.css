@@ -16,7 +16,7 @@
   --border-subtle: rgba(148, 163, 184, 0.12);
   --border-default: rgba(148, 163, 184, 0.2);
   --border-strong: rgba(148, 163, 184, 0.32);
-  --border-accent: rgba(56, 189, 248, 0.42);
+  --border-accent: rgba(217, 70, 239, 0.42);
 
   /* Text — contrast ratios vs bg-shell */
   --text-primary: #e6edf3; /* 14.2:1 — well above WCAG AAA */
@@ -25,19 +25,19 @@
   --text-muted: #5b6576; /* for disabled, meta */
   --text-inverted: #0a0d14;
 
-  /* Accents — primary (cyan/electric blue) */
-  --accent: #38bdf8;
-  --accent-bright: #7dd3fc;
-  --accent-dim: #1f83b0;
-  --accent-tint: rgba(56, 189, 248, 0.16);
-  --accent-tint-strong: rgba(56, 189, 248, 0.32);
-  --accent-glow: 0 0 14px rgba(56, 189, 248, 0.55), 0 0 32px rgba(56, 189, 248, 0.28);
-  --accent-glow-strong: 0 0 18px rgba(56, 189, 248, 0.75), 0 0 48px rgba(56, 189, 248, 0.45);
+  /* Accents — primary (magenta/violet) */
+  --accent: #d946ef;
+  --accent-bright: #f0abfc;
+  --accent-dim: #9333ea;
+  --accent-tint: rgba(217, 70, 239, 0.18);
+  --accent-tint-strong: rgba(217, 70, 239, 0.34);
+  --accent-glow: 0 0 14px rgba(217, 70, 239, 0.55), 0 0 32px rgba(217, 70, 239, 0.28);
+  --accent-glow-strong: 0 0 18px rgba(217, 70, 239, 0.75), 0 0 48px rgba(217, 70, 239, 0.45);
 
-  /* Accents — secondary (magenta/violet) for activity and alerts */
-  --accent-2: #d946ef;
-  --accent-2-bright: #f0abfc;
-  --accent-2-tint: rgba(217, 70, 239, 0.18);
+  /* Accents — secondary (cyan/electric blue) for activity and alerts */
+  --accent-2: #38bdf8;
+  --accent-2-bright: #7dd3fc;
+  --accent-2-tint: rgba(56, 189, 248, 0.16);
 
   /* Semantic status */
   --status-live: #22d3ee; /* cyan-green — live feed */
@@ -48,14 +48,14 @@
   --status-ok: #34d399;
 
   /* Role colors — used across graph, legend, device rows */
-  --role-router: #38bdf8;
+  --role-router: #d946ef;   /* router now magenta, matches accent */
   --role-repeater: #22d3ee;
   --role-client: #a9b4c2;
   --role-client-mute: #7d8898;
   --role-client-hidden: #5b6576;
   --role-tracker: #fb923c;
   --role-sensor: #34d399;
-  --role-tak: #d946ef;
+  --role-tak: #f472b6;      /* pink — keeps TAK distinct from magenta router */
   --role-tak-tracker: #f0abfc;
   --role-lost: #f87171;
 
@@ -105,7 +105,7 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
   --shadow-md: 0 6px 24px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.5);
-  --shadow-ring: 0 0 0 1px rgba(56, 189, 248, 0.3);
+  --shadow-ring: 0 0 0 1px rgba(217, 70, 239, 0.3);
 
   color-scheme: dark;
 }
