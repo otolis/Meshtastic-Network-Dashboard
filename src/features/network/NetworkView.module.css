@@ -185,6 +185,25 @@
   color: var(--status-offline);
 }
 
+@keyframes ring-pulse {
+  0%   { r: 6;  opacity: 0.95; }
+  80%  { r: 36; opacity: 0;    }
+  100% { r: 40; opacity: 0;    }
+}
+
+.svg :global(.gnode.pulsing .gnode-ring-1) {
+  animation: ring-pulse 1.4s var(--ease) infinite;
+  animation-delay: 0s;
+}
+.svg :global(.gnode.pulsing .gnode-ring-2) {
+  animation: ring-pulse 1.4s var(--ease) infinite;
+  animation-delay: 0.35s;
+}
+.svg :global(.gnode.pulsing .gnode-ring-3) {
+  animation: ring-pulse 1.4s var(--ease) infinite;
+  animation-delay: 0.7s;
+}
+
 @media (max-width: 768px) {
   .headerBar {
     flex-direction: column;
