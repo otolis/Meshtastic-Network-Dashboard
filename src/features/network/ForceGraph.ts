@@ -72,6 +72,7 @@ export class ForceGraph {
   private visibilityHandler: (() => void) | null = null;
   private disposed = false;
   private layoutMode: LayoutMode;
+  private panInFlight = false;
 
   constructor(svg: SVGSVGElement, opts: ForceGraphOptions = {}) {
     this.opts = opts;
@@ -88,19 +89,36 @@ export class ForceGraph {
     this.zoomBehavior = zoom<SVGRectElement, unknown>()
       .scaleExtent([PHYSICS.zoom.min, PHYSICS.zoom.max])
       .filter((event: Event) => {
-        // Don't steal clicks on nodes or edges
         const target = event.target as Element | null;
-        if (target && (target.closest('.gnode') || target.closest('.glink'))) return false;
-        return !(event as MouseEvent).button;
+        // Node-internal interactions are handled by d3-drag — don't steal them
+        if (target && target.closest('.gnode')) return false;
+        if (event.type === 'wheel') return true; // allow wheel zoom anywhere
+        const me = event as MouseEvent;
+        // Primary (left) button only for pan
+        return me.button === 0;
+      })
+      .on('start', () => {
+        this.panInFlight = false;
       })
       .on('zoom', (event) => {
+        const prev = this.currentTransform;
+        if (Math.abs(prev.x - event.transform.x) > 1 || Math.abs(prev.y - event.transform.y) > 1) {
+          this.panInFlight = true;
+        }
         this.currentTransform = event.transform;
         select(this.rootGroup).attr('transform', event.transform.toString());
       });
 
     select(this.zoomBg)
       .call(this.zoomBehavior)
-      .on('click', () => this.opts.onBackgroundClick?.());
+      .on('click', () => {
+        if (this.panInFlight) {
+          // Swallow the spurious click that fires after a drag-pan in Chrome/Firefox
+          this.panInFlight = false;
+          return;
+        }
+        this.opts.onBackgroundClick?.();
+      });
 
     // Responsive viewBox — keep fixed to avoid simulation jiggle when panel resizes
     const bbox = svg.getBoundingClientRect();

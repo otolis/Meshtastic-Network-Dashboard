@@ -29,8 +29,9 @@ export const PHYSICS = {
     preTicks: 300,
   },
   zoom: {
-    min: 0.3,
-    max: 4,
+    min: 0.4,
+    max: 5,
+    wheelStep: 1.12,
   },
 } as const;
 
