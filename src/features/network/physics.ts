@@ -44,3 +44,38 @@ export function edgeWidth(quality: number): number {
   const q = Math.max(0, Math.min(1, quality));
   return 0.7 + q * 2.4;
 }
+
+/** Ring radii (normalized 0..1) per hop count. Index 0 = base node at center. */
+export const RING_RADII = [0, 0.10, 0.19, 0.27, 0.34, 0.40] as const;
+
+export interface RadialPositionInput {
+  hops: number;
+  /** index of this node among all nodes at the same hop count, sorted alphabetically by shortName */
+  index: number;
+  /** total number of nodes at this hop count (must be > 0) */
+  total: number;
+  cx: number;
+  cy: number;
+  /** half of the viewBox width — scales horizontal spread */
+  halfW: number;
+  /** half of the viewBox height — scales vertical spread */
+  halfH: number;
+}
+
+/**
+ * Place a node on an elliptical ring. Horizontal stretch 1.6×, vertical 1.05× —
+ * canvas is wider than tall, so rings match the usable area.
+ *
+ * Hops > RING_RADII.length-1 are clamped to the outermost ring.
+ */
+export function radialPosition(input: RadialPositionInput): { x: number; y: number } {
+  const { hops, index, total, cx, cy, halfW, halfH } = input;
+  const hopIdx = Math.min(Math.max(0, hops), RING_RADII.length - 1);
+  const rNorm = RING_RADII[hopIdx] ?? 0;
+  if (rNorm === 0 || total <= 0) return { x: cx, y: cy };
+  const angle = (index / total) * Math.PI * 2 + hops * 0.45 - Math.PI / 2;
+  return {
+    x: cx + Math.cos(angle) * rNorm * halfW * 1.6,
+    y: cy + Math.sin(angle) * rNorm * halfH * 1.05,
+  };
+}

@@ -31,6 +31,7 @@ export default function NetworkView() {
     if (nodes.loading || edges.loading) return;
     if (!graphRef.current) {
       graphRef.current = new ForceGraph(svgRef.current, {
+        layout: 'radial',
         onNodeClick: (id) => selectNode(id),
         onBackgroundClick: () => clear(),
         onNodeHover: (id, pos) => {
@@ -131,7 +132,7 @@ export default function NetworkView() {
       <header className={styles.headerBar}>
         <div>
           <h1 className={styles.headerTitle}>Network Topology</h1>
-          <span className={styles.headerSub}>abstract · force-directed · live</span>
+          <span className={styles.headerSub}>abstract · radial · live</span>
         </div>
         <div className={styles.headerMeta}>
           <span>

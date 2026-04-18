@@ -12,7 +12,7 @@ import type { ZoomBehavior, ZoomTransform } from 'd3-zoom';
 import { drag } from 'd3-drag';
 import type { D3DragEvent } from 'd3-drag';
 import type { Edge, Node, NodeId } from '../../types';
-import { PHYSICS, edgeWidth, nodeRadius } from './physics';
+import { PHYSICS, edgeWidth, nodeRadius, radialPosition } from './physics';
 
 export interface GraphNode extends SimulationNodeDatum {
   id: NodeId;
@@ -27,10 +27,13 @@ export interface GraphLink extends SimulationLinkDatum<GraphNode> {
   target: GraphNode | NodeId;
 }
 
+export type LayoutMode = 'force' | 'radial';
+
 interface ForceGraphOptions {
   onNodeClick?: (id: NodeId) => void;
   onNodeHover?: (id: NodeId | null, pos: { x: number; y: number } | null) => void;
   onBackgroundClick?: () => void;
+  layout?: LayoutMode;
 }
 
 interface PulseOptions {
@@ -67,9 +70,11 @@ export class ForceGraph {
   private viewBoxHeight = 720;
   private visibilityHandler: (() => void) | null = null;
   private disposed = false;
+  private layoutMode: LayoutMode;
 
   constructor(svg: SVGSVGElement, opts: ForceGraphOptions = {}) {
     this.opts = opts;
+    this.layoutMode = opts.layout ?? 'radial';
     this.rootGroup = svg.querySelector('.graph-root') as SVGGElement;
     this.linksGroup = svg.querySelector('.graph-links') as SVGGElement;
     this.nodesGroup = svg.querySelector('.graph-nodes') as SVGGElement;
@@ -153,6 +158,9 @@ export class ForceGraph {
     for (let i = 0; i < PHYSICS.sim.preTicks; i++) this.simulation.tick();
 
     this.renderStructure();
+    if (this.layoutMode === 'radial') {
+      this.applyRadialLayout();
+    }
     this.bindInteractions();
     this.simulation.on('tick', () => this.applyPositions());
     this.applyPositions();
@@ -183,6 +191,9 @@ export class ForceGraph {
     this.simulation.nodes(this.nodes);
     const linkForce = this.simulation.force<ReturnType<typeof forceLink<GraphNode, GraphLink>>>('link');
     linkForce?.links(this.links);
+    if (this.layoutMode === 'radial') {
+      this.applyRadialLayout();
+    }
     this.simulation.alpha(0.2).restart();
     this.renderStructure();
     this.bindInteractions();
@@ -323,6 +334,47 @@ export class ForceGraph {
     const ty = this.viewBoxHeight / 2 - node.y * this.currentTransform.k;
     const newTransform = zoomIdentity.translate(tx, ty).scale(this.currentTransform.k);
     select(this.zoomBg).call(this.zoomBehavior.transform, newTransform);
+  }
+
+  setLayout(mode: LayoutMode): void {
+    if (this.disposed || this.layoutMode === mode) return;
+    this.layoutMode = mode;
+    if (mode === 'radial') {
+      this.simulation?.stop();
+      this.applyRadialLayout();
+      this.applyPositions();
+    } else {
+      // Release any fixed positions from radial, then let the sim settle
+      for (const n of this.nodes) {
+        n.fx = null;
+        n.fy = null;
+      }
+      this.simulation?.alpha(0.6).restart();
+    }
+  }
+
+  private applyRadialLayout(): void {
+    const cx = this.viewBoxWidth / 2;
+    const cy = this.viewBoxHeight / 2;
+    const halfW = this.viewBoxWidth / 2;
+    const halfH = this.viewBoxHeight / 2;
+    // Group nodes by hops, sort each group alphabetically by shortName for stable placement
+    const groups = new Map<number, GraphNode[]>();
+    for (const n of this.nodes) {
+      const arr = groups.get(n.ref.hopsAway) ?? [];
+      arr.push(n);
+      groups.set(n.ref.hopsAway, arr);
+    }
+    for (const [hops, arr] of groups) {
+      arr.sort((a, b) => a.ref.shortName.localeCompare(b.ref.shortName));
+      arr.forEach((n, i) => {
+        const pos = radialPosition({ hops, index: i, total: arr.length, cx, cy, halfW, halfH });
+        n.x = pos.x;
+        n.y = pos.y;
+        n.fx = pos.x;
+        n.fy = pos.y;
+      });
+    }
   }
 
   dispose(): void {
