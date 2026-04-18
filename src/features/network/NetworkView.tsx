@@ -31,6 +31,7 @@ export default function NetworkView() {
     if (nodes.loading || edges.loading) return;
     if (!graphRef.current) {
       graphRef.current = new ForceGraph(svgRef.current, {
+        layout: 'radial',
         onNodeClick: (id) => selectNode(id),
         onBackgroundClick: () => clear(),
         onNodeHover: (id, pos) => {
@@ -77,8 +78,10 @@ export default function NetworkView() {
       if (!graphRef.current) return;
       if (msg.path && msg.path.length > 1) {
         graphRef.current.pulsePath(msg.path, { durationMs: 900 });
+        msg.path.forEach((id) => graphRef.current?.startPulsing(id, 1800));
       } else {
         graphRef.current.pulseNode(msg.fromNode, { durationMs: 700, intensity: 0.7 });
+        graphRef.current.startPulsing(msg.fromNode, 1800);
       }
     });
     return unsub;
@@ -131,7 +134,7 @@ export default function NetworkView() {
       <header className={styles.headerBar}>
         <div>
           <h1 className={styles.headerTitle}>Network Topology</h1>
-          <span className={styles.headerSub}>abstract · force-directed · live</span>
+          <span className={styles.headerSub}>abstract · radial · live</span>
         </div>
         <div className={styles.headerMeta}>
           <span>
@@ -151,10 +154,18 @@ export default function NetworkView() {
             <filter id="soft-glow">
               <feGaussianBlur stdDeviation="4" />
             </filter>
+            <filter id="edge-glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="1.4" result="b" />
+              <feMerge>
+                <feMergeNode in="b" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
           </defs>
           <rect className="graph-zoombg" fill="transparent" />
           <g className="graph-root">
-            <g className="graph-links" />
+            <g className="graph-guides" />
+            <g className="graph-links" filter="url(#edge-glow)" />
             <g className="graph-nodes" />
           </g>
         </svg>

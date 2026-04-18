@@ -12,7 +12,7 @@ import type { ZoomBehavior, ZoomTransform } from 'd3-zoom';
 import { drag } from 'd3-drag';
 import type { D3DragEvent } from 'd3-drag';
 import type { Edge, Node, NodeId } from '../../types';
-import { PHYSICS, edgeWidth, nodeRadius } from './physics';
+import { PHYSICS, RING_RADII, edgeWidth, nodeRadius, radialPosition } from './physics';
 
 export interface GraphNode extends SimulationNodeDatum {
   id: NodeId;
@@ -27,10 +27,13 @@ export interface GraphLink extends SimulationLinkDatum<GraphNode> {
   target: GraphNode | NodeId;
 }
 
+export type LayoutMode = 'force' | 'radial';
+
 interface ForceGraphOptions {
   onNodeClick?: (id: NodeId) => void;
   onNodeHover?: (id: NodeId | null, pos: { x: number; y: number } | null) => void;
   onBackgroundClick?: () => void;
+  layout?: LayoutMode;
 }
 
 interface PulseOptions {
@@ -55,6 +58,7 @@ export class ForceGraph {
   private readonly rootGroup: SVGGElement;
   private readonly linksGroup: SVGGElement;
   private readonly nodesGroup: SVGGElement;
+  private readonly guidesGroup: SVGGElement;
   private readonly zoomBg: SVGRectElement;
   private simulation: Simulation<GraphNode, GraphLink> | null = null;
   private nodes: GraphNode[] = [];
@@ -67,33 +71,54 @@ export class ForceGraph {
   private viewBoxHeight = 720;
   private visibilityHandler: (() => void) | null = null;
   private disposed = false;
+  private layoutMode: LayoutMode;
+  private panInFlight = false;
 
   constructor(svg: SVGSVGElement, opts: ForceGraphOptions = {}) {
     this.opts = opts;
+    this.layoutMode = opts.layout ?? 'radial';
     this.rootGroup = svg.querySelector('.graph-root') as SVGGElement;
     this.linksGroup = svg.querySelector('.graph-links') as SVGGElement;
     this.nodesGroup = svg.querySelector('.graph-nodes') as SVGGElement;
+    this.guidesGroup = svg.querySelector('.graph-guides') as SVGGElement;
     this.zoomBg = svg.querySelector('.graph-zoombg') as SVGRectElement;
-    if (!this.rootGroup || !this.linksGroup || !this.nodesGroup || !this.zoomBg) {
+    if (!this.rootGroup || !this.linksGroup || !this.nodesGroup || !this.zoomBg || !this.guidesGroup) {
       throw new Error('ForceGraph: missing required <g>/<rect> elements in SVG shell');
     }
 
     this.zoomBehavior = zoom<SVGRectElement, unknown>()
       .scaleExtent([PHYSICS.zoom.min, PHYSICS.zoom.max])
       .filter((event: Event) => {
-        // Don't steal clicks on nodes or edges
         const target = event.target as Element | null;
-        if (target && (target.closest('.gnode') || target.closest('.glink'))) return false;
-        return !(event as MouseEvent).button;
+        // Node-internal interactions are handled by d3-drag — don't steal them
+        if (target && target.closest('.gnode')) return false;
+        if (event.type === 'wheel') return true; // allow wheel zoom anywhere
+        const me = event as MouseEvent;
+        // Primary (left) button only for pan
+        return me.button === 0;
+      })
+      .on('start', () => {
+        this.panInFlight = false;
       })
       .on('zoom', (event) => {
+        const prev = this.currentTransform;
+        if (Math.abs(prev.x - event.transform.x) > 1 || Math.abs(prev.y - event.transform.y) > 1) {
+          this.panInFlight = true;
+        }
         this.currentTransform = event.transform;
         select(this.rootGroup).attr('transform', event.transform.toString());
       });
 
     select(this.zoomBg)
       .call(this.zoomBehavior)
-      .on('click', () => this.opts.onBackgroundClick?.());
+      .on('click', () => {
+        if (this.panInFlight) {
+          // Swallow the spurious click that fires after a drag-pan in Chrome/Firefox
+          this.panInFlight = false;
+          return;
+        }
+        this.opts.onBackgroundClick?.();
+      });
 
     // Responsive viewBox — keep fixed to avoid simulation jiggle when panel resizes
     const bbox = svg.getBoundingClientRect();
@@ -153,6 +178,9 @@ export class ForceGraph {
     for (let i = 0; i < PHYSICS.sim.preTicks; i++) this.simulation.tick();
 
     this.renderStructure();
+    if (this.layoutMode === 'radial') {
+      this.applyRadialLayout();
+    }
     this.bindInteractions();
     this.simulation.on('tick', () => this.applyPositions());
     this.applyPositions();
@@ -183,6 +211,9 @@ export class ForceGraph {
     this.simulation.nodes(this.nodes);
     const linkForce = this.simulation.force<ReturnType<typeof forceLink<GraphNode, GraphLink>>>('link');
     linkForce?.links(this.links);
+    if (this.layoutMode === 'radial') {
+      this.applyRadialLayout();
+    }
     this.simulation.alpha(0.2).restart();
     this.renderStructure();
     this.bindInteractions();
@@ -265,6 +296,18 @@ export class ForceGraph {
     if (last) setTimeout(() => this.pulseNode(last, { durationMs: 900, intensity: 1 }), step * (path.length - 1));
   }
 
+  /**
+   * Mark a node as currently pulsing (three-ring loud preset). Auto-clears after ~2s
+   * to match NETW-05 (no ambient fake activity).
+   */
+  startPulsing(id: NodeId, durationMs = 2000): void {
+    if (this.disposed) return;
+    const node = this.nodesGroup.querySelector<SVGGElement>(`[${ATTR_NODE_ID}="${CSS.escape(id)}"]`);
+    if (!node) return;
+    node.classList.add('pulsing');
+    window.setTimeout(() => node.classList.remove('pulsing'), durationMs);
+  }
+
   highlightPath(path: NodeId[] | null): void {
     const links = this.linksGroup.querySelectorAll<SVGLineElement>('.glink');
     const nodes = this.nodesGroup.querySelectorAll<SVGGElement>('.gnode');
@@ -325,6 +368,92 @@ export class ForceGraph {
     select(this.zoomBg).call(this.zoomBehavior.transform, newTransform);
   }
 
+  setLayout(mode: LayoutMode): void {
+    if (this.disposed || this.layoutMode === mode) return;
+    this.layoutMode = mode;
+    this.renderGuides();
+    if (mode === 'radial') {
+      this.simulation?.stop();
+      this.applyRadialLayout();
+      this.applyPositions();
+    } else {
+      // Release any fixed positions from radial, then let the sim settle
+      for (const n of this.nodes) {
+        n.fx = null;
+        n.fy = null;
+      }
+      this.simulation?.alpha(0.6).restart();
+    }
+  }
+
+  private applyRadialLayout(): void {
+    const cx = this.viewBoxWidth / 2;
+    const cy = this.viewBoxHeight / 2;
+    const halfW = this.viewBoxWidth / 2;
+    const halfH = this.viewBoxHeight / 2;
+    // Group nodes by hops, sort each group alphabetically by shortName for stable placement
+    const groups = new Map<number, GraphNode[]>();
+    for (const n of this.nodes) {
+      const arr = groups.get(n.ref.hopsAway) ?? [];
+      arr.push(n);
+      groups.set(n.ref.hopsAway, arr);
+    }
+    for (const [hops, arr] of groups) {
+      arr.sort((a, b) => a.ref.shortName.localeCompare(b.ref.shortName));
+      arr.forEach((n, i) => {
+        const pos = radialPosition({ hops, index: i, total: arr.length, cx, cy, halfW, halfH });
+        n.x = pos.x;
+        n.y = pos.y;
+        n.fx = pos.x;
+        n.fy = pos.y;
+      });
+    }
+  }
+
+  private renderGuides(): void {
+    const ns = 'http://www.w3.org/2000/svg';
+    while (this.guidesGroup.firstChild) this.guidesGroup.removeChild(this.guidesGroup.firstChild);
+    if (this.layoutMode !== 'radial') return;
+    const cx = this.viewBoxWidth / 2;
+    const cy = this.viewBoxHeight / 2;
+    const halfW = this.viewBoxWidth / 2;
+    const halfH = this.viewBoxHeight / 2;
+    for (let i = 1; i < RING_RADII.length; i++) {
+      const rNorm = RING_RADII[i]!;
+      const rx = rNorm * halfW * 1.6;
+      const ry = rNorm * halfH * 1.05;
+      const ell = document.createElementNS(ns, 'ellipse');
+      ell.setAttribute('class', 'graph-ring');
+      ell.setAttribute('cx', String(cx));
+      ell.setAttribute('cy', String(cy));
+      ell.setAttribute('rx', String(rx));
+      ell.setAttribute('ry', String(ry));
+      ell.setAttribute('fill', 'none');
+      ell.setAttribute('stroke', 'var(--accent)');
+      ell.setAttribute('stroke-opacity', String(Math.max(0.02, 0.09 - (i - 1) * 0.012)));
+      ell.setAttribute('stroke-dasharray', '2 7');
+      this.guidesGroup.appendChild(ell);
+      const label = document.createElementNS(ns, 'text');
+      label.setAttribute('class', 'graph-ring-label');
+      label.setAttribute('x', String(cx + rx + 6));
+      label.setAttribute('y', String(cy + 3));
+      label.setAttribute('font-family', 'var(--font-mono)');
+      label.setAttribute('font-size', '9');
+      label.setAttribute('fill', 'var(--text-muted)');
+      label.setAttribute('opacity', '0.55');
+      label.textContent = `${i}h`;
+      this.guidesGroup.appendChild(label);
+    }
+    const dot = document.createElementNS(ns, 'circle');
+    dot.setAttribute('class', 'graph-ring-dot');
+    dot.setAttribute('cx', String(cx));
+    dot.setAttribute('cy', String(cy));
+    dot.setAttribute('r', '3');
+    dot.setAttribute('fill', 'var(--accent)');
+    dot.setAttribute('opacity', '0.3');
+    this.guidesGroup.appendChild(dot);
+  }
+
   dispose(): void {
     this.disposed = true;
     if (this.simulation) {
@@ -369,6 +498,7 @@ export class ForceGraph {
       el.setAttribute('stroke-width', String(edgeWidth(link.ref.quality)));
       el.setAttribute('data-via-mqtt', link.ref.viaMqtt ? 'true' : 'false');
       el.setAttribute('data-quality', link.ref.quality < 0.25 ? 'low' : link.ref.quality < 0.5 ? 'med' : 'high');
+      select(el).datum(link);
     }
     existingLinks.forEach((el, id) => {
       if (!seenLinks.has(id)) el.remove();
@@ -405,6 +535,17 @@ export class ForceGraph {
 
         this.nodesGroup.appendChild(el);
       }
+      if (!el.querySelector('.gnode-ring-1')) {
+        for (const ringCls of ['gnode-ring-1', 'gnode-ring-2', 'gnode-ring-3']) {
+          const ring = document.createElementNS(ns, 'circle');
+          ring.setAttribute('class', ringCls);
+          ring.setAttribute('fill', 'none');
+          ring.setAttribute('stroke', `var(--role-${roleTokenSuffix(node.ref.role)})`);
+          ring.setAttribute('stroke-width', '1.2');
+          ring.setAttribute('opacity', '0');
+          el.insertBefore(ring, el.querySelector('.gnode-body'));
+        }
+      }
       const glow = el.querySelector<SVGCircleElement>('.gnode-glow');
       const body = el.querySelector<SVGCircleElement>('.gnode-body');
       const label = el.querySelector<SVGTextElement>('.gnode-label');
@@ -424,10 +565,13 @@ export class ForceGraph {
 
       label.setAttribute('dy', String(-r - 8));
       label.textContent = node.ref.shortName;
+      select(el).datum(node);
     }
     existingNodes.forEach((el, id) => {
       if (!seenNodes.has(id)) el.remove();
     });
+
+    this.renderGuides();
   }
 
   private bindInteractions(): void {
